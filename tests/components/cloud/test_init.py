@@ -180,12 +180,38 @@ def test_subscription_not_expired(hass):
         assert not cl_data.subscription_expired
 
 
+async def test_create_cloudhook_no_login(hass):
+    """Test create cloudhook when not logged in."""
+    assert await async_setup_component(hass, 'cloud', {})
+    coro = mock_coro({'yo': 'hey'})
+    with patch('homeassistant.components.cloud.cloudhooks.'
+               'Cloudhooks.async_create', return_value=coro) as mock_create, \
+            pytest.raises(cloud.CloudNotAvailable):
+        await hass.components.cloud.async_create_cloudhook('hello')
+
+    assert len(mock_create.mock_calls) == 0
+
+
+async def test_delete_cloudhook_no_login(hass):
+    """Test delete cloudhook when not logged in."""
+    assert await async_setup_component(hass, 'cloud', {})
+    coro = mock_coro({'yo': 'hey'})
+    with patch('homeassistant.components.cloud.cloudhooks.'
+               'Cloudhooks.async_delete', return_value=coro) as mock_delete, \
+            pytest.raises(cloud.CloudNotAvailable):
+        await hass.components.cloud.async_delete_cloudhook('hello')
+
+    assert len(mock_delete.mock_calls) == 0
+
+
 async def test_create_cloudhook(hass):
     """Test create cloudhook."""
     assert await async_setup_component(hass, 'cloud', {})
     coro = mock_coro({'yo': 'hey'})
     with patch('homeassistant.components.cloud.cloudhooks.'
-               'Cloudhooks.async_create', return_value=coro) as mock_create:
+               'Cloudhooks.async_create', return_value=coro) as mock_create, \
+            patch('homeassistant.components.cloud.async_is_logged_in',
+                  return_value=True):
         result = await hass.components.cloud.async_create_cloudhook('hello')
 
     assert result == {'yo': 'hey'}
@@ -197,7 +223,9 @@ async def test_delete_cloudhook(hass):
     assert await async_setup_component(hass, 'cloud', {})
     coro = mock_coro({'yo': 'hey'})
     with patch('homeassistant.components.cloud.cloudhooks.'
-               'Cloudhooks.async_delete', return_value=coro) as mock_delete:
+               'Cloudhooks.async_delete', return_value=coro) as mock_delete, \
+            patch('homeassistant.components.cloud.async_is_logged_in',
+                  return_value=True):
         result = await hass.components.cloud.async_delete_cloudhook('hello')
 
     assert result == {'yo': 'hey'}
