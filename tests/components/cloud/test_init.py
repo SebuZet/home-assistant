@@ -230,3 +230,19 @@ async def test_delete_cloudhook(hass):
 
     assert result == {'yo': 'hey'}
     assert len(mock_delete.mock_calls) == 1
+
+
+async def test_async_logged_in(hass):
+    """Test if is_logged_in works."""
+    # Cloud not loaded
+    assert hass.components.cloud.async_is_logged_in() is False
+
+    assert await async_setup_component(hass, 'cloud', {})
+
+    # Cloud loaded, not logged in
+    assert hass.components.cloud.async_is_logged_in() is False
+
+    hass.data['cloud'].id_token = "some token"
+
+    # Cloud loaded, logged in
+    assert hass.components.cloud.async_is_logged_in() is True
